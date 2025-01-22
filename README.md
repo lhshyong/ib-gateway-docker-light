@@ -1,6 +1,41 @@
 # Interactive Brokers Gateway Docker
 
-<img src="https://github.com/UnusualAlpha/ib-gateway-docker/blob/master/logo.png" height="300" />
+<img src="https://github.com/lhshyong/ib-gateway-docker/blob/master/logo.png" height="300" />
+
+## Change log
+
+2025-01-22
+
+- Update IBC to v 3.20.0
+- Update IBgateway to v 10.30.1t
+- TODO: review & improve configuration settings 
+
+1900-01
+- Copy github [repo](https://github.com/UnusualAlpha/ib-gateway-docker)
+
+
+## Usage
+
+- Update required fields in 'image-files' & 'Dockerfile.template'
+- Command will copy template in 'image-files' to 'stable' or 'latest'
+- Command will copy dokcer template to 'stable' or 'latest'
+
+### Update version
+./update.sh 'channel' 'version'
+
+```
+./update.sh stable 10.30.1t
+```
+
+### Build Docker image
+docker build -t 'imagename':'version' .
+
+```
+docker build -t ibgateway:10.30.1t .
+```
+
+
+
 
 ## What is it?
 
@@ -21,8 +56,8 @@ a VNC server that allows to interact with the IB Gateway user interface (optiona
 
 | Channel  | IB Gateway Version | IBC Version | Docker Tags                 |
 | -------- | ------------------ | ----------- | --------------------------- |
-| `latest` | `10.22.1m`         | `3.16.0`    | `latest` `10.22` `10.22.1m` |
-| `stable` | `10.19.1j`         | `3.15.2`    | `stable` `10.19` `10.19.1j` |
+| `latest` | `10.30.1t`         | `3.20.0`    | `latest` `10.30` `10.30.1t` |
+| `stable` | `10.30.1t`         | `3.20.0`    | `stable` `10.30` `10.30.1t` |
 
 
 See all available tags [here](https://github.com/UnusualAlpha/ib-gateway-docker/pkgs/container/ib-gateway/).
@@ -32,11 +67,10 @@ See all available tags [here](https://github.com/UnusualAlpha/ib-gateway-docker/
 Create a `docker-compose.yml` (or include ib-gateway services on your existing one)
 
 ```yaml
-version: "3.4"
 
 services:
   ib-gateway:
-    image: ghcr.io/unusualalpha/ib-gateway:latest
+    image: ghcr.io/lhshyong/ib-gateway:latest
     restart: always
     environment:
       TWS_USERID: ${TWS_USERID}
