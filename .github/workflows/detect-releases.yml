@@ -50,6 +50,13 @@ jobs:
           curl -sSL "$download_url" --output "$dest"
           sha256sum "$dest" > "${dest}.sha256"
 
+          download_url_tws='https://download2.interactivebrokers.com/installers/tws/${{ matrix.channel }}-standalone/tws-${{ matrix.channel }}-standalone-linux-x64.sh'
+          dest_tws='tws-${{ steps.version.outputs.build_version }}-standalone-linux-x64.sh'
+          curl -sSL "$download_url_tws" --output "$dest_tws"
+          sha256sum "$dest_tws" > "${dest_tws}.sha256"
+
+          ls -lt
+          
       - name: Create release
         if: ${{ steps.check-update.outputs.has_update == 'true' }}
         env:
@@ -58,7 +65,7 @@ jobs:
           gh release create 'ibgateway-${{ matrix.channel }}@${{ steps.version.outputs.build_version }}' \
             -t 'IB Gateway ${{ matrix.channel }} ${{ steps.version.outputs.build_version }}' \
             -n 'IB Gateway ${{ matrix.channel }} ${{ steps.version.outputs.build_version }} release files' \
-            ibgateway-*
+            ibgateway-* tws-*
 
       - name: Update ${{ matrix.channel }}
         if: ${{ steps.check-update.outputs.has_update == 'true' }}
