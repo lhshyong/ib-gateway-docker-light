@@ -80,12 +80,12 @@ FIX=no
 
 # Your TWS username:
 
-IbLoginId=edemo
+IbLoginId=
 
 
 # Your TWS password:
 
-IbPassword=demouser
+IbPassword=
 
 
 # FIX CTCI Authentication Settings
@@ -191,7 +191,7 @@ ExitAfterSecondFactorAuthenticationTimeout=no
 # account must be supplied. If it is set to 'paper', then either
 # the live or the paper-trading credentials may be supplied.
 
-TradingMode=live
+TradingMode=
 
 
 # Paper-trading Account Warning
@@ -205,7 +205,7 @@ TradingMode=live
 # confirm acceptance. Setting it to 'no' will leave the dialog
 # on display, and the user will have to deal with it manually.
 
-AcceptNonBrokerageAccountWarning=no
+AcceptNonBrokerageAccountWarning=yes
 
 
 # Login Dialog Display Timeout
@@ -326,7 +326,7 @@ MinimizeMainWindow=no
 #
 # The default is 'manual'.
 
-ExistingSessionDetectedAction=manual
+ExistingSessionDetectedAction=primary
 
 
 # Override TWS API Port Number
@@ -343,7 +343,7 @@ ExistingSessionDetectedAction=manual
 # non-FIX users will never need it, so don't use it unless you know
 # you need it.
 
-OverrideTwsApiPort=
+OverrideTwsApiPort=4000
 
 
 # Override TWS Master Client ID
@@ -393,7 +393,7 @@ ReadOnlyLogin=no
 # set the relevant checkbox (this only needs to be done once) and
 # not provide a value for this setting.
 
-ReadOnlyApi=
+ReadOnlyApi=${READ_ONLY_API}
 
 
 # API Precautions
@@ -414,23 +414,23 @@ ReadOnlyApi=
 # should use the Global Configuration to set the relevant checkboxes and not
 # provide values for these settings.
 
-BypassOrderPrecautions=
+BypassOrderPrecautions=yes
 
-BypassBondWarning=
+BypassBondWarning=yes
 
-BypassNegativeYieldToWorstConfirmation=
+BypassNegativeYieldToWorstConfirmation=yes
 
-BypassCalledBondWarning=
+BypassCalledBondWarning=yes
 
-BypassSameActionPairTradeWarning=
+BypassSameActionPairTradeWarning=yes
 
-BypassPriceBasedVolatilityRiskWarning=
+BypassPriceBasedVolatilityRiskWarning=yes
 
-BypassUSStocksMarketDataInSharesWarning=
+BypassUSStocksMarketDataInSharesWarning=yes
 
-BypassRedirectOrderWarning=
+BypassRedirectOrderWarning=yes
 
-BypassNoOverfillProtectionPrecaution=
+BypassNoOverfillProtectionPrecaution=yes
 
 
 # Market data size for US stocks - lots or shares
@@ -473,7 +473,7 @@ BypassNoOverfillProtectionPrecaution=
 # However you can change this immmediately by setting
 # SendMarketDataInLotsForUSstocks (see below) to 'no' .
 
-AcceptBidAskLastSizeDisplayUpdateNotification=
+AcceptBidAskLastSizeDisplayUpdateNotification=accept
 
 
 # This setting determines whether the API settings checkbox labelled
@@ -696,7 +696,7 @@ ClosedownAt=
 # configuration page, as this is much more secure (in this case, no
 # incoming API connection dialogs will occur for those IP addresses).
 
-AcceptIncomingConnectionAction=manual
+AcceptIncomingConnectionAction=reject
 
 
 # Allow Blind Trading
@@ -713,7 +713,7 @@ AcceptIncomingConnectionAction=manual
 #   no    means the dialog remains on display and must be
 #         handled by the user.
 
-AllowBlindTrading=no
+AllowBlindTrading=yes
 
 
 # Save Settings on a Schedule
