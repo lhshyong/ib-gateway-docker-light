@@ -50,6 +50,9 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:22.04
 
+ARG VERSION_TAG
+LABEL version_tag=$VERSION_TAG
+
 ENV IB_GATEWAY_VERSION=10.30.1t
 
 WORKDIR /root
