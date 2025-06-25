@@ -50,9 +50,6 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:22.04
 
-ARG VERSION_TAG
-LABEL version_tag=$VERSION_TAG
-
 ENV IB_GATEWAY_VERSION=10.30.1t
 
 WORKDIR /root
@@ -81,6 +78,9 @@ ENV TWS_PATH /root/Jts
 ENV IBC_PATH /root/ibc
 ENV IBC_INI /root/ibc/config.ini
 ENV TWOFA_TIMEOUT_ACTION exit
+
+ARG VERSION_TAG
+LABEL version_tag=$VERSION_TAG
 
 # Start run script
 CMD ["/root/scripts/run.sh"]
