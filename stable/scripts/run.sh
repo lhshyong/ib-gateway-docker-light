@@ -1,5 +1,4 @@
 #!/bin/sh
-set -x
 
 export DISPLAY=:1
 
@@ -20,7 +19,3 @@ envsubst < "${IBC_INI}.tmpl" > "${IBC_INI}"
      "--ibc-path=${IBC_PATH}" "--ibc-ini=${IBC_INI}" \
      "--user=${TWS_USERID}" "--pw=${TWS_PASSWORD}" "--mode=${TRADING_MODE}" \
      "--on2fatimeout=${TWOFA_TIMEOUT_ACTION}"
-
-
-# uncomment this to keep image alive.
-# exec tail -f /dev/null
