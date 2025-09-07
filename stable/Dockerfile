@@ -8,7 +8,7 @@
 
 FROM ubuntu:22.04 as setup
 
-ENV IB_GATEWAY_VERSION=10.30.1w
+ENV IB_GATEWAY_VERSION=10.37.1l
 ENV IB_GATEWAY_RELEASE_CHANNEL=stable
 ENV IBC_VERSION=3.20.0
 
@@ -50,7 +50,7 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:22.04
 
-ENV IB_GATEWAY_VERSION=10.30.1w
+ENV IB_GATEWAY_VERSION=10.37.1l
 
 WORKDIR /root
 
@@ -78,9 +78,6 @@ ENV TWS_PATH /root/Jts
 ENV IBC_PATH /root/ibc
 ENV IBC_INI /root/ibc/config.ini
 ENV TWOFA_TIMEOUT_ACTION exit
-
-ARG VERSION_TAG
-LABEL version_tag=$VERSION_TAG
 
 # Start run script
 CMD ["/root/scripts/run.sh"]
