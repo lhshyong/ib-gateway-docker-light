@@ -8,9 +8,9 @@
 
 FROM ubuntu:22.04 as setup
 
-ENV IB_GATEWAY_VERSION=10.30.1w
+ENV IB_GATEWAY_VERSION=10.37.1l
 ENV IB_GATEWAY_RELEASE_CHANNEL=stable
-ENV IBC_VERSION=3.20.0
+ENV IBC_VERSION=3.23.0
 
 # Prepare system
 RUN apt-get update -y
@@ -50,7 +50,7 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:22.04
 
-ENV IB_GATEWAY_VERSION=10.30.1w
+ENV IB_GATEWAY_VERSION=10.37.1l
 
 WORKDIR /root
 

@@ -5,13 +5,13 @@
 # This script builds a Docker image with a version tag that includes a base version and an auto-incremented build number.
 # 
 # Usage:
-# - When executed, the user is prompted to enter a base version (e.g., 1.0.2a).
-#   - If a version is entered, the image will be tagged as apps:<version>-1 (e.g., apps:1.0.2a-1).
+# - When executed, the user is prompted to enter a base version (e.g., 10.30.2a).
+#   - If a version is entered, the image will be tagged as apps:<version>-1 (e.g., apps:10.30.2a-1).
 #   - If left blank, the script reads the current version from the 'apps:snapshot' image,
 #     increments the build number, and uses that as the new tag.
 #
 # The final image is tagged with:
-# - apps:<base-version>-<build-no> (e.g., apps:1.0.2a-4)
+# - apps:<base-version>-<build-no> (e.g., apps:10.30.2a-4)
 # - apps:snapshot (always points to the latest build)
 #
 # The version tag is also saved as a Docker image label: version_tag=<tag>
@@ -20,14 +20,14 @@
 IMAGE_NAME="docker.picosoft.com.my/ibgateway"
 SNAPSHOT_TAG="${IMAGE_NAME}:snapshot"
 
-read -p "Enter base version (e.g., 1.0.2a) or press Enter to auto-detect from snapshot: " BASE
+read -p "Enter base version (e.g., 10.30.2a) or press Enter to auto-detect from snapshot: " BASE
 
 if [[ -n "$BASE" ]]; then
   # User entered a base version
   NEXT_NO=1
 else
   # Auto-detect from snapshot image
-  echo "Checking version from snapshot..."
+  echo "Checking version from repository snapshot..."
   docker pull ${SNAPSHOT_TAG} > /dev/null 2>&1
   VERSION_TAG=$(docker inspect ${SNAPSHOT_TAG} --format='{{ index .Config.Labels "version_tag" }}' 2>/dev/null)
 

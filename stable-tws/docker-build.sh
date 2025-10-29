@@ -27,7 +27,7 @@ if [[ -n "$BASE" ]]; then
   NEXT_NO=1
 else
   # Auto-detect from snapshot image
-  echo "Checking version from snapshot..."
+  echo "Checking version from repository snapshot..."
   docker pull ${SNAPSHOT_TAG} > /dev/null 2>&1
   VERSION_TAG=$(docker inspect ${SNAPSHOT_TAG} --format='{{ index .Config.Labels "version_tag" }}' 2>/dev/null)
 
