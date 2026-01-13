@@ -79,8 +79,5 @@ ENV IBC_PATH /root/ibc
 ENV IBC_INI /root/ibc/config.ini
 ENV TWOFA_TIMEOUT_ACTION exit
 
-ARG VERSION_TAG
-LABEL version_tag=$VERSION_TAG
-
 # Start run script
 CMD ["/root/scripts/run.sh"]
