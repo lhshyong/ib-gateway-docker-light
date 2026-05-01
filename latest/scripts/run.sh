@@ -3,7 +3,7 @@
 export DISPLAY=:1
 
 rm -f /tmp/.X1-lock
-Xvfb :1 -ac -screen 0 1024x768x16 &
+Xvfb :1 -ac -screen 0 1024x768x24 &
 
 if [ -n "$VNC_SERVER_PASSWORD" ]; then
   echo "Starting VNC server"
