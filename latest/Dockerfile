@@ -6,11 +6,11 @@
 # production image and consume unnecessary space.
 #
 
-FROM ubuntu:24.04 as setup
+FROM ubuntu:22.04 as setup
 
-ENV IB_GATEWAY_VERSION=10.37.1r
+ENV IB_GATEWAY_VERSION=10.48.1c
 ENV IB_GATEWAY_RELEASE_CHANNEL=latest
-ENV IBC_VERSION=3.23.0
+ENV IBC_VERSION=3.20.0
 
 # Prepare system
 RUN apt-get update -y
@@ -48,9 +48,9 @@ COPY ./scripts /root/scripts
 # Build Stage: build production image
 #
 
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
-ENV IB_GATEWAY_VERSION=10.37.1r
+ENV IB_GATEWAY_VERSION=10.48.1c
 
 WORKDIR /root
 
@@ -64,8 +64,6 @@ RUN apt-get install --no-install-recommends --yes \
   libxtst6 \
   libxi6 \
   libgtk2.0-bin \
-  libgtk-3-0 \
-  libgtk-3-dev \
   socat \
   x11vnc
 
