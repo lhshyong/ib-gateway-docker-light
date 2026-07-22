@@ -6,18 +6,26 @@
 # production image and consume unnecessary space.
 #
 
-FROM ubuntu:24.04 as setup
+ARG IB_GATEWAY_VERSION=10.45.1h
+ARG IB_GATEWAY_RELEASE_CHANNEL=stable
+ARG IBC_VERSION=3.23.0
 
-ENV IB_GATEWAY_VERSION=10.37.1r
-ENV IB_GATEWAY_RELEASE_CHANNEL=stable
-ENV IBC_VERSION=3.23.0
+FROM ubuntu:24.04 AS setup
+
+ARG IB_GATEWAY_VERSION
+ARG IB_GATEWAY_RELEASE_CHANNEL
+ARG IBC_VERSION
+ENV IB_GATEWAY_VERSION=${IB_GATEWAY_VERSION}
+ENV IB_GATEWAY_RELEASE_CHANNEL=${IB_GATEWAY_RELEASE_CHANNEL}
+ENV IBC_VERSION=${IBC_VERSION}
 
 # Prepare system
-RUN apt-get update -y
-RUN apt-get install --no-install-recommends --yes \
-  curl \
-  ca-certificates \
-  unzip
+RUN apt-get update -y \
+ && apt-get install --no-install-recommends --yes \
+      curl \
+      ca-certificates \
+      unzip \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp/setup
 
@@ -32,6 +40,17 @@ RUN sha256sum --check ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.
 RUN chmod a+x ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh
 RUN ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh -q -dir /root/Jts/ibgateway/${IB_GATEWAY_VERSION}
 COPY ./config/ibgateway/jts.ini /root/Jts/jts.ini
+
+# The installer hardcodes ParallelGCThreads=20/ConcGCThreads=5, sized for a desktop.
+# Those are honoured verbatim inside a container, so on a 2-vCPU host the GC runs
+# 10x oversubscribed. Pin them to a middle value that suits every environment this
+# image is deployed to, and that also caps the runaway case where no CPU limit is set
+# on a many-core host (ergonomics would otherwise scale to the whole node).
+# Heap (-Xmx768m) is left at the installer default.
+RUN sed -i \
+  -e 's/^-XX:ParallelGCThreads=.*/-XX:ParallelGCThreads=8/' \
+  -e 's/^-XX:ConcGCThreads=.*/-XX:ConcGCThreads=2/' \
+  /root/Jts/ibgateway/${IB_GATEWAY_VERSION}/ibgateway.vmoptions
 
 # Install IBC
 RUN curl -sSL https://github.com/IbcAlpha/IBC/releases/download/${IBC_VERSION}/IBCLinux-${IBC_VERSION}.zip --output IBCLinux-${IBC_VERSION}.zip
@@ -50,24 +69,33 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:24.04
 
-ENV IB_GATEWAY_VERSION=10.37.1r
+ARG IB_GATEWAY_VERSION
+ENV IB_GATEWAY_VERSION=${IB_GATEWAY_VERSION}
+ENV TZ=Etc/UTC
+ENV NO_AT_BRIDGE=1
 
 WORKDIR /root
 
 # Prepare system
-RUN apt-get update -y
-RUN apt-get install --no-install-recommends --yes \
-  gettext \
-  xvfb \
-  libxslt-dev \
-  libxrender1 \
-  libxtst6 \
-  libxi6 \
-  libgtk2.0-bin \
-  libgtk-3-0 \
-  libgtk-3-dev \
-  socat \
-  x11vnc
+RUN apt-get update -y \
+ && apt-get install --no-install-recommends --yes \
+      gettext \
+      xvfb \
+      x11vnc \
+      xfonts-base \
+      socat \
+      tini \
+      procps \
+      ca-certificates \
+      fontconfig \
+      fonts-dejavu-core \
+      libxrender1 \
+      libxtst6 \
+      libxi6 \
+      libxslt1.1 \
+      libgtk-3-0t64 \
+      libasound2t64 \
+ && rm -rf /var/lib/apt/lists/*
 
 # Copy files
 COPY --from=setup /root/ .
@@ -75,14 +103,18 @@ RUN chmod a+x /root/scripts/*.sh
 COPY --from=setup /usr/local/i4j_jres/ /usr/local/i4j_jres
 
 # IBC env vars
-ENV TWS_MAJOR_VRSN ${IB_GATEWAY_VERSION}
-ENV TWS_PATH /root/Jts
-ENV IBC_PATH /root/ibc
-ENV IBC_INI /root/ibc/config.ini
-ENV TWOFA_TIMEOUT_ACTION exit
+ENV TWS_MAJOR_VRSN=${IB_GATEWAY_VERSION}
+ENV TWS_PATH=/root/Jts
+ENV IBC_PATH=/root/ibc
+ENV IBC_INI=/root/ibc/config.ini
+ENV TWOFA_TIMEOUT_ACTION=exit
 
 ARG VERSION_TAG
 LABEL version_tag=$VERSION_TAG
 
-# Start run script
+# Start run script under tini. As PID 1 a plain shell ignores SIGTERM entirely, so
+# "docker stop" always ends in SIGKILL; tini gives the container a real signal handler
+# and reaps orphans. Note: a clean Gateway shutdown additionally needs run.sh to
+# 'exec' ibcstart.sh, otherwise the signal stops at run.sh and never reaches Java.
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/root/scripts/run.sh"]
