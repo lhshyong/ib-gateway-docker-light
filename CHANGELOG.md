@@ -2,13 +2,27 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased] - stable
+## [Unreleased] - stable / stable-tws
 
-IB Gateway `10.37.1r` -> `10.45.1h`, plus a stability and image-size pass over the
-`stable` image. Target: a container that runs unattended for a week or more, with the
-Gateway performing its own daily restart and no human intervention in between.
+IB Gateway and TWS `10.45.1h` -> `10.45.1j`.
+
+### Changed
+
+- `stable/Dockerfile`: `IB_GATEWAY_VERSION=10.45.1j`
+- `stable-tws/Dockerfile`: `IB_GATEWAY_VERSION=10.45.1j`
+  (`IBC_GATEWAY_VERSION_PATH=1045` unchanged)
+
+---
+
+## stable — IB Gateway `10.37.1r` -> `10.45.1h`
+
+Stability and image-size pass over the `stable` image. Target: a container that runs
+unattended for a week or more, with the Gateway performing its own daily restart and no
+human intervention in between.
 
 Image size `1.21GB` -> `~1.0GB`; installed packages `402` -> `268`.
+
+Later ported to `latest/`, `Dockerfile.template`, `stable-tws/`, and `latest-tws/`.
 
 ### Added
 
@@ -72,20 +86,6 @@ Image size `1.21GB` -> `~1.0GB`; installed packages `402` -> `268`.
   healthy and the Gateway kept running. Now supervised in a loop that restarts it after
   5s and logs the event, so a flapping proxy is visible instead of silent.
 
-### Known issues / not yet addressed
-
-- `set -x` in `run.sh` writes `TWS_PASSWORD` and `VNC_SERVER_PASSWORD` in cleartext to
-  the Docker log stream (confirmed: one occurrence each, `--pw=<password>`). Not written
-  to any on-disk log.
-- Gateway, IBC and x11vnc logs accumulate in the container's writable layer with no
-  rotation. Acceptable for a weekly recreate; a slow disk fill beyond that.
-- `update.sh` regenerates `stable/` from `Dockerfile.template` and overwrites
-  `stable/scripts/` from `image-files/`, so the next version bump reverts everything
-  above. The template is also still on `ubuntu:22.04` with IBC `3.20.0`. Changes need
-  porting to those sources.
-- Only `stable/` was updated. `latest/`, `stable-tws/`, `latest-tws/` and `image-files/`
-  still carry the original scripts.
-
 ### Deployment notes
 
 - Java takes ~6s to shut down cleanly. Docker's default 10s stop timeout works but is
@@ -97,3 +97,85 @@ Image size `1.21GB` -> `~1.0GB`; installed packages `402` -> `268`.
   kept so early clients get a clean connection refusal rather than being accepted and
   immediately dropped. Note the Gateway only listens on 4000 after a successful login,
   which with manual 2FA can be well beyond 30s.
+
+### Known issues
+
+- `set -x` in `run.sh` writes `TWS_PASSWORD` and `VNC_SERVER_PASSWORD` in cleartext to
+  the Docker log stream (confirmed: one occurrence each, `--pw=<password>`). Not written
+  to any on-disk log.
+- Gateway, IBC and x11vnc logs accumulate in the container's writable layer with no
+  rotation. Acceptable for a weekly recreate; a slow disk fill beyond that.
+- `update.sh` regenerates gateway channel Dockerfiles from `Dockerfile.template` and
+  overwrites scripts from `image-files/`. Keep those sources in sync with
+  `stable/`/`latest/` when editing, or a bump via `update.sh` reverts local script
+  changes. It does not touch `*-tws` images.
+
+---
+
+## stable-tws — TWS hardening (at `10.45.1h`)
+
+Same base as `stable` but packaging TWS instead of the Gateway. All of the `stable`
+changes above are carried over (tini, `exec`, x11vnc watchdog, supervised `socat`, GC
+thread pinning against `tws.vmoptions`). The items below are specific to this image.
+
+Image size `1.0GB` -> `980MB`; installed packages `~300` -> `279`.
+
+### Security
+
+- **Re-enabled the installer SHA256 verification**, which was commented out. The TWS
+  installer (~500MB) was being downloaded and executed as root with no integrity check,
+  while `stable/` verified its own. The published checksum file is well-formed and
+  matches; it was verified to pass on a clean build:
+  `tws-10.45.1h-standalone-linux-x64.sh: OK`.
+
+### Fixed
+
+- **Xvfb raised from 16-bit to 24-bit colour** (`1280x800x16` -> `1280x800x24`). The
+  Gateway image was moved 16 -> 24 in an earlier commit for rendering reasons; TWS never
+  received the same fix, despite bundling JxBrowser (Chromium), which expects 24/32-bit.
+  This matters because VNC is how a human completes the login.
+
+### Changed
+
+- **Heap pinned to `-Xmx2048m`** in `tws.vmoptions` (installer default is lower; TWS +
+  JxBrowser need more headroom than Gateway's `-Xmx768m`).
+- **Runtime package list reduced from 43 names to 20**, with no loss of function.
+  JxBrowser's published requirements list targets a bare system; on top of
+  `libgtk-3-0t64` and `libnss3` most of it was already satisfied. Verified with apt that
+  naming the extras made no difference at all to the resolved set (190 packages either
+  way), so 22 purely duplicated names were removed.
+  `fontconfig` and `libx{render1,tst6,i6}` are deliberately kept explicit despite also
+  being GTK3 dependencies: fonts and AWT are what the VNC login screen depends on, and
+  they must not vanish silently if GTK3 rearranges its dependency chain.
+- **Dropped `libu2f-udev`** (USB security-key support, which also pulled in `udev`) and
+  **`xdg-utils`** (hands URLs to a desktop browser) - both meaningless in a headless
+  container. Net effect 190 -> 187 packages, ~388MB -> ~377MB of installed size.
+  `wget` is deliberately retained as an in-image debugging tool.
+- Removed a leftover `RUN ls /root/Jts/` debug step.
+- `blackbox` window manager added and supervised (same retry pattern as x11vnc): without
+  a WM, TWS windows cannot be moved/resized over VNC.
+
+### Deployment notes
+
+- **Set `--shm-size=1g`** (compose: `shm_size: 1gb`). Docker defaults `/dev/shm` to 64MB
+  and TWS bundles JxBrowser (Chromium), which is known to fail in that situation.
+  Note this is precautionary: at the login screen no Chromium process is spawned and no
+  Chromium binaries are extracted, so it only bites once a feature that activates
+  JxBrowser is used (news panels and similar). The failure mode is obscure enough, and
+  the flag cheap enough, to set it up front.
+- **Budget more memory than for the Gateway.** Measured at the login screen, before any
+  market data: java 299MB, Xvfb 71MB, ~408MB total. That is the floor — image pins
+  `-Xmx2048m`, plus native memory, a larger 1280x800 Xvfb, and any Chromium processes,
+  whose memory sits *outside* the JVM heap and is not capped by `-Xmx`.
+  Allow ~2.5GB minimum, more if browser panels are used.
+- `IBC_GATEWAY_VERSION_PATH` (e.g. `1045`) is a manual mapping from
+  `IB_GATEWAY_VERSION` (e.g. `10.45.1j`) and must be bumped alongside it. A mismatch
+  fails the build loudly at the `tws.vmoptions` sed rather than producing a broken image.
+
+### Known issues
+
+- `systemd`, `libsystemd-shared`, `libcryptsetup12` and the full dbus suite are present
+  in the image, pulled in via `dbus-user-session` <- the GTK3 chain. Neither systemd nor
+  dbus runs. Structural rather than a stray package name, so it needs a targeted purge
+  to remove.
+- `set -x` credential leak and unrotated logs apply here exactly as for `stable`.
