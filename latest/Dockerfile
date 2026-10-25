@@ -6,7 +6,7 @@
 # production image and consume unnecessary space.
 #
 
-ARG IB_GATEWAY_VERSION=10.37.1r
+ARG IB_GATEWAY_VERSION=10.51.1d
 ARG IB_GATEWAY_RELEASE_CHANNEL=latest
 ARG IBC_VERSION=3.23.0
 
