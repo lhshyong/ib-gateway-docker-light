@@ -6,10 +6,10 @@
 # production image and consume unnecessary space.
 #
 
-ARG IB_GATEWAY_VERSION=10.45.1j
+ARG IB_GATEWAY_VERSION=10.50.1f
 ARG IB_GATEWAY_RELEASE_CHANNEL=stable
-ARG IBC_VERSION=3.23.0
-ARG IBC_GATEWAY_VERSION_PATH=1045
+ARG IBC_VERSION=3.24.2
+ARG IBC_GATEWAY_VERSION_PATH=1050
 
 FROM ubuntu:24.04 AS setup
 
@@ -74,6 +74,7 @@ COPY ./scripts /root/scripts
 FROM ubuntu:24.04
 
 ARG IBC_GATEWAY_VERSION_PATH
+ENV IBC_GATEWAY_VERSION_PATH=${IBC_GATEWAY_VERSION_PATH}
 ENV IBC_GATEWAY_VERSION=${IBC_GATEWAY_VERSION_PATH}
 ENV TZ=Etc/UTC
 ENV NO_AT_BRIDGE=1
@@ -120,10 +121,10 @@ RUN apt-get update -y \
 # Copy files
 COPY --from=setup /root/ .
 RUN chmod a+x /root/scripts/*.sh
-COPY --from=setup /usr/local/i4j_jres/ /usr/local/i4j_jres
+COPY --from=setup /root/Jts/${IBC_GATEWAY_VERSION_PATH}/jre/ /root/Jts/${IBC_GATEWAY_VERSION_PATH}/jre
 
 # IBC env vars
-ENV TWS_MAJOR_VRSN=${IBC_GATEWAY_VERSION}
+ENV TWS_MAJOR_VRSN=${IBC_GATEWAY_VERSION_PATH}
 ENV TWS_PATH=/root/Jts
 ENV IBC_PATH=/root/ibc
 ENV IBC_INI=/root/ibc/config.ini

@@ -36,9 +36,12 @@ envsubst < "${IBC_INI}.tmpl" > "${IBC_INI}"
 # exec so this shell is replaced by ibcstart.sh: SIGTERM from tini then lands on IBC's
 # own TERM trap, which stops TWS cleanly instead of it being SIGKILLed at teardown.
 # No -g: this image runs TWS, not Gateway.
+# v10.50 IBKR nests the JRE under the install dir; pass it so IBC skips stale
+# install4j /tmp/setup/... paths.
 exec /root/ibc/scripts/ibcstart.sh "${TWS_MAJOR_VRSN}" \
      "--tws-path=${TWS_PATH}" \
      "--ibc-path=${IBC_PATH}" "--ibc-ini=${IBC_INI}" \
+     "--java-path=${TWS_PATH}/${IBC_GATEWAY_VERSION_PATH}/jre/bin" \
      "--user=${TWS_USERID}" "--pw=${TWS_PASSWORD}" "--mode=${TRADING_MODE}" \
      "--on2fatimeout=${TWOFA_TIMEOUT_ACTION}"
 
