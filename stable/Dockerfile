@@ -6,18 +6,23 @@
 # production image and consume unnecessary space.
 #
 
-ARG IB_GATEWAY_VERSION=10.45.1j
+ARG IB_GATEWAY_VERSION=10.50.1f
 ARG IB_GATEWAY_RELEASE_CHANNEL=stable
-ARG IBC_VERSION=3.23.0
+ARG IBC_VERSION=3.24.2
+ARG GATEWAY_VERSION_PATH=1050
 
 FROM ubuntu:24.04 AS setup
 
 ARG IB_GATEWAY_VERSION
 ARG IB_GATEWAY_RELEASE_CHANNEL
 ARG IBC_VERSION
+ARG GATEWAY_VERSION_PATH
+
 ENV IB_GATEWAY_VERSION=${IB_GATEWAY_VERSION}
 ENV IB_GATEWAY_RELEASE_CHANNEL=${IB_GATEWAY_RELEASE_CHANNEL}
 ENV IBC_VERSION=${IBC_VERSION}
+ENV GATEWAY_VERSION_PATH=${GATEWAY_VERSION_PATH}
+
 
 # Prepare system
 RUN apt-get update -y \
@@ -38,7 +43,7 @@ RUN curl -sSL https://github.com/lhshyong/ib-gateway-docker-light/releases/downl
   --output ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.sha256
 RUN sha256sum --check ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.sha256
 RUN chmod a+x ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh
-RUN ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh -q -dir /root/Jts/ibgateway/${IB_GATEWAY_VERSION}
+RUN ./ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh -q -dir /root/Jts/ibgateway/${GATEWAY_VERSION_PATH}
 COPY ./config/ibgateway/jts.ini /root/Jts/jts.ini
 
 # The installer hardcodes ParallelGCThreads=20/ConcGCThreads=5, sized for a desktop.
@@ -50,7 +55,7 @@ COPY ./config/ibgateway/jts.ini /root/Jts/jts.ini
 RUN sed -i \
   -e 's/^-XX:ParallelGCThreads=.*/-XX:ParallelGCThreads=8/' \
   -e 's/^-XX:ConcGCThreads=.*/-XX:ConcGCThreads=2/' \
-  /root/Jts/ibgateway/${IB_GATEWAY_VERSION}/ibgateway.vmoptions
+  /root/Jts/ibgateway/${GATEWAY_VERSION_PATH}/ibgateway.vmoptions
 
 # Install IBC
 RUN curl -sSL https://github.com/IbcAlpha/IBC/releases/download/${IBC_VERSION}/IBCLinux-${IBC_VERSION}.zip --output IBCLinux-${IBC_VERSION}.zip
@@ -69,10 +74,13 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:24.04
 
+ARG GATEWAY_VERSION_PATH
 ARG IB_GATEWAY_VERSION
 ENV IB_GATEWAY_VERSION=${IB_GATEWAY_VERSION}
 ENV TZ=Etc/UTC
 ENV NO_AT_BRIDGE=1
+
+ENV GATEWAY_VERSION_PATH=${GATEWAY_VERSION_PATH}
 
 WORKDIR /root
 
@@ -100,10 +108,10 @@ RUN apt-get update -y \
 # Copy files
 COPY --from=setup /root/ .
 RUN chmod a+x /root/scripts/*.sh
-COPY --from=setup /usr/local/i4j_jres/ /usr/local/i4j_jres
+COPY --from=setup /root/Jts/ibgateway/${GATEWAY_VERSION_PATH}/jre/ /root/Jts/ibgateway/${GATEWAY_VERSION_PATH}/jre
 
 # IBC env vars
-ENV TWS_MAJOR_VRSN=${IB_GATEWAY_VERSION}
+ENV TWS_MAJOR_VRSN=${GATEWAY_VERSION_PATH}
 ENV TWS_PATH=/root/Jts
 ENV IBC_PATH=/root/ibc
 ENV IBC_INI=/root/ibc/config.ini
