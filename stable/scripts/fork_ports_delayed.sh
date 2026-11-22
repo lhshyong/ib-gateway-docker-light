@@ -1,5 +1,7 @@
 #!/bin/sh
+
 sleep 30
+
 if [ "$TRADING_MODE" = "paper" ]; then
   PORT=4002
 else
